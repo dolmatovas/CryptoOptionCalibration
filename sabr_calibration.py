@@ -13,11 +13,11 @@ def gen_random_sabr_params() -> np.ndarray:
             sabr_params(np.ndarray): generated sabr params
     """
     eps = 1e-5
-    sig0 = 0.3 * np.random.rand(1) + eps
-    alpha = 1.0 * np.random.rand(1) + eps
+    alpha = 0.3 * np.random.rand(1) + eps
+    v = 1.0 * np.random.rand(1) + eps
     beta = 0.1 + 0.8 * np.random.rand(1)
     rho = -0.9 + (1.8) * np.random.rand(1)
-    return np.asarray([sig0[0], alpha[0], beta[0], rho[0]] )
+    return np.asarray([alpha[0], v[0], beta[0], rho[0]] )
 
 
 def proj_sabr( sabr_params : np.ndarray )->np.ndarray:
@@ -30,16 +30,16 @@ def proj_sabr( sabr_params : np.ndarray )->np.ndarray:
         Returns:
             sabr_params(np.ndarray): clipped parameters
     """
-    sig0, alpha, beta, rho = sabr_params
+    alpha, v, beta, rho = sabr_params
     
     eps = 1e-6
     
-    sig0 = max(sig0, eps)
     alpha = max(alpha, eps)
+    v = max(v, eps)
     rho = np.clip(rho, -1 + eps, 1 - eps)
     beta = np.clip(beta, eps, 1 - eps)
     
-    return np.asarray( [sig0, alpha, beta, rho] )
+    return np.asarray( [alpha, v, beta, rho] )
 
 
 class SABRCalibrator:
@@ -173,9 +173,8 @@ class SABRCalibrator:
                     res(np.ndarray) : vector or residuals
                     J(np.ndarray)   : Jacobian
             '''
-            sig0, alpha, beta, rho = sabr_params
             
-            C, vega, iv, d1, d2, d3, d4 = sabr_approx_derivatives(K, F, T, self.r, sig0, alpha, beta, rho)
+            C, vega, iv, d1, d2, d3, d4 = sabr_approx_derivatives(K, F, T, self.r, *sabr_params)
             P = C + np.exp(-self.r * T) * ( K - F )
             X_ = P
             X_[typ] = C[typ]

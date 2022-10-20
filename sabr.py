@@ -9,7 +9,7 @@ class SABR:
     
     Attributes:
         r(float): interest rate
-        sabr_params(np.ndarray): parameters of the SABR model, sabr_params = [sig_0, alpha, beta, rho]
+        sabr_params(np.ndarray): parameters of the SABR model, sabr_params = [alpha, v, beta, rho]
     """
         
     def __init__(self, sabr_params:np.ndarray, interest_rate:float = 0):
