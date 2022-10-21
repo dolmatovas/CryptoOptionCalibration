@@ -35,14 +35,14 @@ def proj_heston( heston_params : np.ndarray )->np.ndarray:
         Returns:
             heston_params(np.ndarray): clipped parameters
     """
-    eps = 1e-6
+    eps = 1e-3
     for i in range(len(heston_params) // 5):
         v0, theta, rho, k, sig = heston_params[i * 5 : i * 5 + 5]
-        v0 = max(v0, eps)
-        theta = max(theta, eps)
+        v0 = np.clip(v0, eps, 5.0)
+        theta = np.clip(theta, eps, 5.0)
         rho = np.clip(rho, -1 + eps, 1 - eps)
-        k = max(k, eps)
-        sig = max(sig, eps)
+        k = np.clip(k, eps, 10.0)
+        sig = np.clip(sig, eps, 5.0)
         heston_params[i * 5 : i * 5 + 5] = v0, theta, rho, k, sig
     return heston_params
 
@@ -56,7 +56,7 @@ class HestonCalibrator:
         heston(heston): heston-object 
     """
         
-    def __init__(self, interest_rate:float = 0, n_dim:int = 1):
+    def __init__(self, interest_rate:float = 0, n_dim:int = 1, n_int:int = 200):
         """
             The __init__ method just save interest rate.
             
@@ -66,6 +66,7 @@ class HestonCalibrator:
         """
         self.r = interest_rate
         self.n_dim = n_dim
+        self.n_int = n_int
 
         self.heston_params = None
         self.heston = None
@@ -122,7 +123,8 @@ class HestonCalibrator:
         else:
             assert len(heston_params) == 5 * self.n_dim
 
-        Nu = 200
+        r = self.r
+        n_int = self.n_int
         def get_residuals( heston_params:np.ndarray ) -> Tuple[ np.ndarray, np.ndarray ]:
             '''
                 This function calculates residuals and Jacobian matrix
@@ -132,8 +134,8 @@ class HestonCalibrator:
                     res(np.ndarray) : vector or residuals
                     J(np.ndarray)   : Jacobian
             '''
-            C, J = heston_option_price_derivatives(F, K, T, Nu, self.r, heston_params)
-            P = C + np.exp(-self.r * T) * ( K - F )
+            C, J = heston_option_price_derivatives(F, K, T, n_int, r, heston_params)
+            P = C + np.exp(-r * T) * ( K - F )
             X_ = C
             X_[~typ] = P[~typ]
             res = X_ - X
@@ -143,7 +145,7 @@ class HestonCalibrator:
         heston_params, fs = nonlinear_optimization(Niter, get_residuals, proj_heston, heston_params)
         self.heston_params = heston_params
 
-        self.heston = Heston(self.r, self.heston_params)
+        self.heston = Heston(self.heston_params, self.r, self.n_int)
         return np.asarray(fs)
         
         

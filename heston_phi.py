@@ -8,7 +8,8 @@ from numba import njit
 from typing import Tuple, Union
 
 
-def phi(u:np.ndarray, tau:float, v0:float, theta:float, rho:float, k:float, sig:float) -> np.ndarray:
+
+def heston_phi(u:np.ndarray, tau:float, v0:float, theta:float, rho:float, k:float, sig:float) -> np.ndarray:
     '''
         return Characteristic function of log S_T
     '''
@@ -27,7 +28,8 @@ def phi(u:np.ndarray, tau:float, v0:float, theta:float, rho:float, k:float, sig:
     return pred_phi
 
 
-def phi_derivatives(u:np.ndarray, tau:float, v0:float, theta:float, 
+
+def heston_phi_derivatives(u:np.ndarray, tau:float, v0:float, theta:float, 
                 rho:float, k:float, sig:float)-> Tuple[np.ndarray, np.ndarray]:
     '''
         return characteristic function of log S_T phi and its derivatives with respect
@@ -39,7 +41,6 @@ def phi_derivatives(u:np.ndarray, tau:float, v0:float, theta:float,
     '''
     xi = k - sig * rho * u * 1j
     d = np.sqrt( xi ** 2 + sig**2 * (1j * u + u ** 2) + 0j)
-    
     
     c = np.cosh(d * tau / 2)
     s = np.sinh(d * tau / 2)
