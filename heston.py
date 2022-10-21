@@ -68,7 +68,7 @@ class Heston:
         
     def __call__(self, K: np.ndarray, 
                       F: Union[float, np.ndarray], 
-                      T: Union[float, np.ndarray]) -> Tuple[ np.ndarray, np.ndarray ]:
+                      T: Union[float, np.ndarray], is_call:bool = True) -> Tuple[ np.ndarray, np.ndarray ]:
         """
             Returns option prices and implied volatility for given parameters K, F, T 
             
@@ -82,5 +82,7 @@ class Heston:
         """
         C = heston_option_price(F, K, T, self.num_of_integration_points, self.r, self.heston_params)
         iv = implied_volatility(C, K, F, T, self.r) 
-        return C, iv
+        P = C + np.exp(-self.r * T) * (K - F)
+        X = C if is_call else P
+        return X, iv
 

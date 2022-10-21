@@ -2,6 +2,8 @@ import numpy as np
 
 from typing import Tuple, Callable
 
+from tqdm import tqdm
+
 def nonlinear_optimization(Niter:int, 
                           f:Callable[ [np.ndarray], Tuple[np.ndarray, np.ndarray]], 
                           proj:Callable[ [np.ndarray], np.ndarray ], 
@@ -33,10 +35,9 @@ def nonlinear_optimization(Niter:int,
     fs = []
     res, J = f(x)
     F = np.linalg.norm(res)
-    for i in range(Niter):
-        I = np.diag(np.diag(J @ J.T))
+    for i in tqdm(range(Niter)):
+        I = np.diag(np.diag(J @ J.T)) + 1e-5 * np.eye(len(x))
         dx = np.linalg.solve( mu * I + J @ J.T, J @ res )
-        
         x_ = proj(x - dx)
         res_, J_ = f(x_)
         F_ = np.linalg.norm(res_)

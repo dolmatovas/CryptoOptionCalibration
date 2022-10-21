@@ -77,7 +77,8 @@ class SABRCalibrator:
                T: Union[float, np.ndarray], 
                Niter:int=100, 
                weights:Optional[np.ndarray]=None, 
-               sabr_params:Optional[np.ndarray]=None) -> np.ndarray:
+               sabr_params:Optional[np.ndarray]=None,
+               fit_beta:bool=True) -> np.ndarray:
         """
             The fit_iv method calibrate pararmeters of the SABR model to market implied volatility
             
@@ -103,7 +104,8 @@ class SABRCalibrator:
         weights = weights / np.sum(weights)
         if sabr_params is None:
             sabr_params = gen_random_sabr_params()
-
+        if not fit_beta:
+            sabr_params[2] = 0.5
         def get_residals( sabr_params:np.ndarray ) -> Tuple[ np.ndarray, np.ndarray ]:
             '''
                 This function calculates residuals and Jacobian matrix
@@ -113,10 +115,12 @@ class SABRCalibrator:
                     res(np.ndarray) : vector or residuals
                     J(np.ndarray)   : Jacobian
             '''
-            sig0, alpha, beta, rho = sabr_params
-            C, vega, iv, d1, d2, d3, d4 = sabr_approx_derivatives(K, F, T, self.r, sig0, alpha, beta, rho)
+            alpha, v, beta, rho = sabr_params
+            C, vega, iv, iv_alpha, iv_v, iv_beta, iv_rho = sabr_approx_derivatives(K, F, T, self.r, alpha, v, beta, rho)
+            if not fit_beta:
+                iv_beta *= 0
             res = iv - iv0
-            J = np.asarray([d1, d2, d3, d4])
+            J = np.asarray([iv_alpha, iv_v, iv_beta, iv_rho])
             return res * weights, J @ np.diag(weights)
         
         #optimization
@@ -135,7 +139,8 @@ class SABRCalibrator:
                typ: Union[bool, np.ndarray], 
                Niter:int=100, 
                weights:Optional[np.ndarray]=None, 
-               sabr_params:Optional[np.ndarray]=None) -> np.ndarray:
+               sabr_params:Optional[np.ndarray]=None,
+               fit_beta: bool = True) -> np.ndarray:
         """
             The fit_iv method calibrate pararmeters of the SABR model to market prices
             
@@ -163,7 +168,8 @@ class SABRCalibrator:
         weights = weights / np.sum(weights)
         if sabr_params is None:
             sabr_params = gen_random_sabr_params()
-
+        if not fit_beta:
+            sabr_params[2] = 0.5
         def get_residals( sabr_params:np.ndarray ) -> Tuple[ np.ndarray, np.ndarray ]:
             '''
                 This function calculates residuals and Jacobian matrix
@@ -174,12 +180,15 @@ class SABRCalibrator:
                     J(np.ndarray)   : Jacobian
             '''
             
-            C, vega, iv, d1, d2, d3, d4 = sabr_approx_derivatives(K, F, T, self.r, *sabr_params)
+            alpha, v, beta, rho = sabr_params
+            C, vega, iv, iv_alpha, iv_v, iv_beta, iv_rho = sabr_approx_derivatives(K, F, T, self.r, alpha, v, beta, rho)
+            if not fit_beta:
+                iv_beta *= 0.0
             P = C + np.exp(-self.r * T) * ( K - F )
             X_ = P
             X_[typ] = C[typ]
             res = X_ - X
-            J = np.asarray([d1 * vega, d2 * vega, d3 * vega, d4 * vega])
+            J = np.asarray([iv_alpha * vega, iv_v * vega, iv_beta * vega, iv_rho * vega])
             return res * weights, J @ np.diag(weights)
         
         #optimization
