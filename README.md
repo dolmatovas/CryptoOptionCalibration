@@ -1,9 +1,13 @@
 # CryptoOptionCalibration
 Repo for Crypto Option Calibration project in CMF
 
-Main result is [here](https://github.com/dolmatovas/CryptoOptionCalibration/blob/main/Calibration_SABR.ipynb)
+Main result for sabr model is [here](https://github.com/dolmatovas/CryptoOptionCalibration/blob/main/sabr%20calibration.ipynb)
 
-[Here](https://github.com/dolmatovas/CryptoOptionCalibration/blob/main/calibration%20examples.ipynb) you can see examples of calibration of the SABR model to synthetic data.
+[Here](https://github.com/dolmatovas/CryptoOptionCalibration/blob/main/sabr%20calibration%20examples.ipynb) you can see examples of calibration of the SABR model to synthetic data.
+
+Main result for heston model is [here](https://github.com/dolmatovas/CryptoOptionCalibration/blob/main/heston%20calibration.ipynb)
+
+[Here](https://github.com/dolmatovas/CryptoOptionCalibration/blob/main/heston%20calibration%20examples.ipynb) you can see examples of calibration of the Heston model to synthetic data.
 
 In sabr_approx.py the approximation formulas for implied volatility in the SABR model and its derivatives with respect to parameters are presented. 
 
