@@ -1,5 +1,7 @@
 # CryptoOptionCalibration
-Repo for Crypto Option Calibration project in CMF
+This repo is for the Crypto Option Calibration project in CMF.
+
+This project is about calibration of the SABR and Heston models to market data from (Deribit exchange)[https://www.deribit.com/]. The Levenberg-Marquardt Method is used for parameters calibration.
 
 Main result for sabr model is [here](https://github.com/dolmatovas/CryptoOptionCalibration/blob/main/sabr%20calibration.ipynb)
 
