@@ -80,7 +80,8 @@ class Heston:
                 C(np.ndarray): option prices
                 iv(np.ndarray) : implied volatility
         """
-        C = heston_option_price(F, K, T, self.num_of_integration_points, self.r, self.heston_params)
+        S = F * np.exp(-self.r * T)
+        C = heston_option_price(S, K, T, self.num_of_integration_points, self.r, self.heston_params)
         iv = implied_volatility(C, K, F, T, self.r) 
         P = C + np.exp(-self.r * T) * (K - F)
         X = C if is_call else P
