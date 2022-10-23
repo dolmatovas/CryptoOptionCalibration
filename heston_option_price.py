@@ -5,26 +5,61 @@ import scipy.stats as sps
 
 from heston_phi import heston_phi, heston_phi_derivatives
 
+from numbers import Number
 
-def check_input_types(S:Union[np.ndarray, float], K:Union[np.ndarray, float], tau:Union[np.ndarray, float]):
+
+def check_input_types(S:Union[np.ndarray, float], K:Union[np.ndarray, float], T:Union[np.ndarray, float]):
     """
         this function just checks if hte input parameters and np.ndarray, and if it float, wrapps them to array
     """
-    if not isinstance(K, np.ndarray):
+    if isinstance(K, np.ndarray):
+        if isinstance(S, np.ndarray):
+            assert len(S) == len(K)
+        else:
+            assert isinstance(S, Number)
+            S = np.ones_like(K) * S
+        if isinstance(T, np.ndarray):
+            assert len(T) == len(K)
+        else:
+            assert isinstance(T, Number)
+            T = np.ones_like(K) * T     
+    
+    elif isinstance(S, np.ndarray):
+        if isinstance(K, np.ndarray):
+            assert len(K) == len(S)
+        else:
+            assert isinstance(K, Number)
+            K = np.ones_like(S) * K        
+        if isinstance(T, np.ndarray):
+            assert len(T) == len(S)
+        else:
+            assert isinstance(T, Number)
+            T = np.ones_like(S) * T
+    
+    elif isinstance(T, np.ndarray):
+        if isinstance(S, np.ndarray):
+            assert len(S) == len(T)
+        else:
+            assert isinstance(S, Number)
+            S = np.ones_like(T) * S
+        if isinstance(K, np.ndarray):
+            assert len(K) == len(T)
+        else:
+            assert isinstance(K, Number)
+            K = np.ones_like(T) * K           
+    
+    else:
+        assert isinstance(K, Number) and isinstance(S, Number) and isinstance(T, Number)
         K = np.asarray([K])
-    if isinstance(tau, np.ndarray):
-        assert len(tau) == len(K)
-    else:
-        tau = np.asarray([tau])
-    if isinstance(S, np.ndarray):
-        assert len(S) == len(K)
-    else:
         S = np.asarray([S])
-    return S, K, tau
+        T = np.asarray([T])
+
+
+    return S, K, T
 
 
 
-def getMesh(Nu:int) -> Tuple[np.ndarray, np.ndarray]:
+def get_mesh(Nu:int) -> Tuple[np.ndarray, np.ndarray]:
     tn = np.linspace(0, 1, (Nu // 2) + 1)
     h = tn[1] - tn[0]
     tn = tn[:-1] + h / 2.0
@@ -43,7 +78,7 @@ def getMesh(Nu:int) -> Tuple[np.ndarray, np.ndarray]:
     return un, hn
 
 
-def heston_option_price(S:Union[np.ndarray, float], K:Union[np.ndarray, float], tau:Union[np.ndarray, float], 
+def heston_option_price(S:Union[np.ndarray, float], K:Union[np.ndarray, float], T:Union[np.ndarray, float], 
                  Nu:int, r:float, heston_params:np.ndarray, is_call=True) -> np.ndarray:
     """
         This function calculatas option price in Heston model
@@ -53,7 +88,7 @@ def heston_option_price(S:Union[np.ndarray, float], K:Union[np.ndarray, float], 
         Args:
             S(Union[np.ndarray, float]): current stock price            
             K(Union[np.ndarray, float]): strike prices
-            tau(Union[np.ndarray, float]): expiration time
+            T(Union[np.ndarray, float]): expiration time
             Nu(int): number of intgration points
             r(float): interest rate
             heston_params(np.ndarray): parameters of Heston model, 
@@ -64,18 +99,17 @@ def heston_option_price(S:Union[np.ndarray, float], K:Union[np.ndarray, float], 
     """
 
     #transform input to np.ndarray
-    S, K, tau = check_input_types(S, K, tau)
-    Nk = len(K)
+    S, K, T = check_input_types(S, K, T)
 
-    un, hn = getMesh(Nu)
+    un, hn = get_mesh(Nu)
 
     un = un.reshape(1, -1)
     hn = hn.reshape(1, -1)
     
-    xn = np.log(S * np.exp(r * tau) / K).reshape(-1, 1)
+    xn = np.log(S * np.exp(r * T) / K).reshape(-1, 1)
     
-    phi1 = np.ones((len(tau), Nu), np.complex128)
-    phi2 = np.ones((len(tau), Nu), np.complex128)
+    phi1 = np.ones((len(T), Nu), np.complex128)
+    phi2 = np.ones((len(T), Nu), np.complex128)
     
     #размерность
     Ndim = len(heston_params) // 5
@@ -83,8 +117,8 @@ def heston_option_price(S:Union[np.ndarray, float], K:Union[np.ndarray, float], 
         v, theta, rho, k, sig = heston_params[5 * i : 5 * i + 5]
         params = {"v0":v, "theta":theta, "rho":rho, "k":k, "sig":sig}
 
-        _phi1 = heston_phi(un, tau.reshape(-1, 1), v, theta, rho, k, sig)
-        _phi2 = heston_phi(un - 1j, tau.reshape(-1, 1), v, theta, rho, k, sig)
+        _phi1 = heston_phi(un, T.reshape(-1, 1), v, theta, rho, k, sig)
+        _phi2 = heston_phi(un - 1j, T.reshape(-1, 1), v, theta, rho, k, sig)
         
         phi1 *= _phi1
         phi2 *= _phi2
@@ -101,16 +135,16 @@ def heston_option_price(S:Union[np.ndarray, float], K:Union[np.ndarray, float], 
     if is_call:
         P1 = 0.5 + integral1
         P2 = 0.5 + integral2
-        res = S * P2 - np.exp(-r * tau) * K * P1
+        res = S * P2 - np.exp(-r * T) * K * P1
     else:
         P1 = 0.5 - integral1
         P2 = 0.5 - integral2
-        res = np.exp(-r * tau) * K * P1 - S * P2
+        res = np.exp(-r * T) * K * P1 - S * P2
     return res
 
 
 
-def heston_option_price_derivatives(S:Union[np.ndarray, float], K:Union[np.ndarray, float], tau:Union[np.ndarray, float], 
+def heston_option_price_derivatives(S:Union[np.ndarray, float], K:Union[np.ndarray, float], T:Union[np.ndarray, float], 
                             Nu:int, r:float, heston_params:np.ndarray, is_call=True) -> Tuple[np.ndarray, np.ndarray]:
     """
         This function calculatas option price and it derivatives with respect to parameters of the heston model
@@ -118,7 +152,7 @@ def heston_option_price_derivatives(S:Union[np.ndarray, float], K:Union[np.ndarr
         Args:
             K(np.ndarray): strike prices
             S(np.ndarray): current stock price            
-            tau(np.ndarray): expiration time
+            T(np.ndarray): expiration time
             Nu(int): number of intgration points
             r(float): interest rate
             heston_params(np.ndarray): parameters of Heston model, 
@@ -132,34 +166,33 @@ def heston_option_price_derivatives(S:Union[np.ndarray, float], K:Union[np.ndarr
     """
 
     #transform input to np.ndarray
-    S, K, tau = check_input_types(S, K, tau)
+    S, K, T = check_input_types(S, K, T)
 
-    Nk = len(K)
-    Nt = len(tau)
+    N = len(K)
     Ndim = len(heston_params) // 5
 
-    un, hn = getMesh(Nu)
+    un, hn = get_mesh(Nu)
 
     un = un.reshape(1, -1)
     hn = hn.reshape(1, -1)
     
-    xn = np.log(S * np.exp(r * tau) / K).reshape(-1, 1)
+    xn = np.log(S * np.exp(r * T) / K).reshape(-1, 1)
     
-    phi1 = np.ones((Nt, Nu), np.complex128)
-    phi2 = np.ones((Nt, Nu), np.complex128)
+    phi1 = np.ones((N, Nu), np.complex128)
+    phi2 = np.ones((N, Nu), np.complex128)
 
-    der1 = np.zeros( (Ndim * 5, Nt, Nu), np.complex128)
-    der2 = np.zeros( (Ndim * 5, Nt, Nu), np.complex128)
+    der1 = np.zeros( (Ndim * 5, N, Nu), np.complex128)
+    der2 = np.zeros( (Ndim * 5, N, Nu), np.complex128)
 
     
     for i in range(Ndim):
         v, theta, rho, k, sig = heston_params[5 * i : 5 * i + 5]
 
-        _phi1, _der1 = heston_phi_derivatives(un     , tau.reshape(-1, 1), v, theta, rho, k, sig )
-        _phi2, _der2 = heston_phi_derivatives(un - 1j, tau.reshape(-1, 1), v, theta, rho, k, sig )
+        _phi1, _der1 = heston_phi_derivatives(un     , T.reshape(-1, 1), v, theta, rho, k, sig )
+        _phi2, _der2 = heston_phi_derivatives(un - 1j, T.reshape(-1, 1), v, theta, rho, k, sig )
         
-        assert _phi1.shape == (Nt, Nu)
-        assert _der1.shape == (5, Nt, Nu)
+        assert _phi1.shape == (N, Nu)
+        assert _der1.shape == (5, N, Nu)
 
         phi1 = phi1 * _phi1
         phi2 = phi2 * _phi2
@@ -175,17 +208,17 @@ def heston_option_price_derivatives(S:Union[np.ndarray, float], K:Union[np.ndarr
 
     integral_derivatives1 = np.sum( (F1 * der1).real, axis=-1 ) / np.pi
     integral_derivatives2 = np.sum( (F2 * der2).real, axis=-1 ) / np.pi
-    assert integral_derivatives1.shape == (5 * Ndim, Nk)
+    assert integral_derivatives1.shape == (5 * Ndim, N)
 
     if is_call:
         P1 = 0.5 + integral1
         P2 = 0.5 + integral2
-        res = S * P2 - np.exp(-r * tau) * K * P1
+        res = S * P2 - np.exp(-r * T) * K * P1
     else:
         P1 = 0.5 - integral1
         P2 = 0.5 - integral2
-        res = np.exp(-r * tau) * K * P1 - S * P2
+        res = np.exp(-r * T) * K * P1 - S * P2
     
-    res_der = S * integral_derivatives2 - np.exp(-r * tau) * K * integral_derivatives1 
-    assert res_der.shape == (5 * Ndim, Nk)
+    res_der = S * integral_derivatives2 - np.exp(-r * T) * K * integral_derivatives1 
+    assert res_der.shape == (5 * Ndim, N)
     return res, res_der

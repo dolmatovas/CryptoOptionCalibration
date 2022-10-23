@@ -4,6 +4,57 @@ from scipy.optimize import root_scalar
 
 from typing import Union, Tuple, Optional
 
+from numbers import Number
+
+def check_input_types(S:Union[np.ndarray, float], K:Union[np.ndarray, float], T:Union[np.ndarray, float]):
+    """
+        this function just checks if the input parameters and np.ndarray, and if it float, wrapps them to array
+    """
+    if isinstance(K, np.ndarray):
+        if isinstance(S, np.ndarray):
+            assert len(S) == len(K)
+        else:
+            assert isinstance(S, Number)
+            S = np.ones_like(K) * S
+        if isinstance(T, np.ndarray):
+            assert len(T) == len(K)
+        else:
+            assert isinstance(T, Number)
+            T = np.ones_like(K) * T     
+    
+    elif isinstance(S, np.ndarray):
+        if isinstance(K, np.ndarray):
+            assert len(K) == len(S)
+        else:
+            assert isinstance(K, Number)
+            K = np.ones_like(S) * K        
+        if isinstance(T, np.ndarray):
+            assert len(T) == len(S)
+        else:
+            assert isinstance(T, Number)
+            T = np.ones_like(S) * T
+    
+    elif isinstance(T, np.ndarray):
+        if isinstance(S, np.ndarray):
+            assert len(S) == len(T)
+        else:
+            assert isinstance(S, Number)
+            S = np.ones_like(T) * S
+        if isinstance(K, np.ndarray):
+            assert len(K) == len(T)
+        else:
+            assert isinstance(K, Number)
+            K = np.ones_like(T) * K           
+    
+    else:
+        assert isinstance(K, Number) and isinstance(S, Number) and isinstance(T, Number)
+        K = np.asarray([K])
+        S = np.asarray([S])
+        T = np.asarray([T])
+
+
+    return S, K, T
+
 
 def black_scholes(K:Union[float, np.ndarray], F:Union[float, np.ndarray], T:Union[float, np.ndarray], r:float, vol:float) -> Union[float, np.ndarray]:
     """
@@ -92,25 +143,10 @@ def implied_volatility(C:Union[float, np.ndarray], K:Union[float, np.ndarray],
         Returns:
             vol(Union[float, np.ndarray]): implied volatility
     """
-
     if isinstance(C, float):
         return implied_volatility_helper(C, K, F, T, r)
-    if isinstance(C, np.ndarray):
-
-        assert isinstance(K, np.ndarray)
-        assert len(K) == len(C)
-        
-        if isinstance(F, np.ndarray):
-            assert len(F) == len(C)
-        else:
-            #repeat F len(C) times
-            F = np.ones_like(C) * F
-        if isinstance(T, np.ndarray):
-            assert len(T) == len(C)
-        else:
-            #repeat T len(C) times
-            T = np.ones_like(C) * T
-        
+    assert isinstance(C, np.ndarray)
+    K, F, T = check_input_types(K, F, T)        
     result = [ implied_volatility_helper(c, k, f, t, r) for c, k, f, t in zip(C, K, F, T) ]
     return np.asarray(result)
     
