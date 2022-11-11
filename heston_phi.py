@@ -49,9 +49,8 @@ def heston_phi_derivatives(u:np.ndarray, tau:float, v0:float, theta:float,
     A2 = (d * c + xi * s)
     A = A1 / A2
     
-    B = d * np.exp(k * tau / 2) / A2
-    
     D = np.log(d) + (k - d) * tau / 2 - np.log( (d + xi)/2 + (d-xi)/2 * np.exp(-d*tau) )
+    B = np.exp(D)
     
     phi = np.exp(-k * theta * rho * tau * u * 1j / sig - A * v0 + 2 * k * theta / sig ** 2 * D)
     
