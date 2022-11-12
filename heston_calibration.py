@@ -142,11 +142,11 @@ class HestonCalibrator:
             return res * weights, J @ np.diag(weights)
         
         #optimization
-        heston_params, fs = nonlinear_optimization(Niter, get_residuals, proj_heston, heston_params)
-        self.heston_params = heston_params
+        result = nonlinear_optimization(Niter, get_residuals, proj_heston, heston_params)
+        self.heston_params = result['x']
 
         self.heston = Heston(self.heston_params, self.r, self.n_int)
-        return np.asarray(fs)
+        return result
         
         
     def predict(self, K: np.ndarray, 

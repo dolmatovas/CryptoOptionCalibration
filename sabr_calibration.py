@@ -124,11 +124,11 @@ class SABRCalibrator:
             return res * weights, J @ np.diag(weights)
         
         #optimization
-        sabr_params, fs = nonlinear_optimization(Niter, get_residals, proj_sabr, sabr_params)
-        self.sabr_params = sabr_params
-
+        result = nonlinear_optimization(Niter, get_residals, proj_sabr, sabr_params)
+        self.sabr_params = result['x']
+        
         self.sabr = SABR(self.sabr_params, self.r)
-        return np.asarray(fs)
+        return result
 
 
     def fit_price(self, 
@@ -192,11 +192,11 @@ class SABRCalibrator:
             return res * weights, J @ np.diag(weights)
         
         #optimization
-        sabr_params, fs = nonlinear_optimization(Niter, get_residals, proj_sabr, sabr_params)
-        self.sabr_params = sabr_params
-
+        result = nonlinear_optimization(Niter, get_residals, proj_sabr, sabr_params)
+        self.sabr_params = result['x']
+        
         self.sabr = SABR(self.sabr_params, self.r)
-        return np.asarray(fs)
+        return result
         
         
     def predict(self, K: np.ndarray, 
