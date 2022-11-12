@@ -1,13 +1,13 @@
 import numpy as np
 
-from typing import Tuple, Callable
+from typing import Tuple, Callable, Dict
 
 from tqdm import tqdm
 
 def nonlinear_optimization(Niter:int, 
                           f:Callable[ [np.ndarray], Tuple[np.ndarray, np.ndarray]], 
                           proj:Callable[ [np.ndarray], np.ndarray ], 
-                          x0:np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+                          x0:np.ndarray) -> Dict:
     ''' 
         Nonlinear least squares method, Levenberg-Marquardt Method
         
@@ -23,8 +23,10 @@ def nonlinear_optimization(Niter:int,
             x0(np.ndarray): initial parameters
 
         Returns:
-            x(np.ndarray): optimized parameters
-            fs(np.ndarray): l2 norm of residuals on each iteration
+            result(dict): dictionary with results
+            result['xs'] contains optimized parameters on each iteration
+            result['objective'] contains norm of residuals on each iteration
+            result['x'] is optimized parameters
     '''
     x = x0.copy()
 
