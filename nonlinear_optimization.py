@@ -42,7 +42,7 @@ def nonlinear_optimization(Niter:int,
     
     result = { "xs":[x], "objective":[F], "x":None }
     
-    for i in tqdm(range(Niter)):
+    for i in range(Niter):
         I = np.diag(np.diag(J @ J.T)) + 1e-5 * np.eye(len(x))
         dx = np.linalg.solve( mu * I + J @ J.T, J @ res )
         x_ = proj(x - dx)
